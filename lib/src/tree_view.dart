@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import './tree_node.dart';
 import './tree_node_data.dart';
+import 'tree_controller.dart';
 
 class TreeView extends StatefulWidget {
   final List<TreeNodeData> data;
@@ -25,6 +26,8 @@ class TreeView extends StatefulWidget {
   final TreeNodeData Function(TreeNodeData parent)? append;
   final Future<List<TreeNodeData>> Function(TreeNodeData parent)? load;
 
+  final TreeController? treeController;
+
   const TreeView({
     Key? key,
     required this.data,
@@ -45,6 +48,7 @@ class TreeView extends StatefulWidget {
     this.showCheckBox = false,
     this.contentTappable = false,
     this.icon = const Icon(Icons.expand_more, size: 16.0),
+    this.treeController,
   }) : super(key: key);
 
   @override
@@ -169,6 +173,7 @@ class _TreeViewState extends State<TreeView> {
                 onRemove: widget.onRemove ?? (n, p) {},
                 onAppend: widget.onAppend ?? (n, p) {},
                 onCollapse: widget.onCollapse ?? (n) {},
+                treeController: widget.treeController ?? TreeController(),
               );
             },
           )

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../flutter_tree.dart';
+import 'tree_controller.dart';
 
 class TreeNode extends StatefulWidget {
   final TreeNodeData data;
@@ -28,6 +29,8 @@ class TreeNode extends StatefulWidget {
   final void Function(TreeNodeData node) append;
   final void Function(TreeNodeData node, TreeNodeData parent) onAppend;
 
+  final TreeController treeController;
+
   const TreeNode({
     Key? key,
     required this.data,
@@ -48,6 +51,7 @@ class TreeNode extends StatefulWidget {
     required this.onAppend,
     required this.onRemove,
     required this.onCollapse,
+    required this.treeController,
   }) : super(key: key);
 
   @override
@@ -56,7 +60,7 @@ class TreeNode extends StatefulWidget {
 
 class _TreeNodeState extends State<TreeNode> with SingleTickerProviderStateMixin {
   bool _isExpanded = false;
-  bool _isChecked = false;
+  // bool _isChecked = false;
   bool _showLoading = false;
   late AnimationController _rotationController;
   final Tween<double> _turnsTween = Tween<double>(begin: -0.25, end: 0.0);
@@ -82,6 +86,7 @@ class _TreeNodeState extends State<TreeNode> with SingleTickerProviderStateMixin
         onCollapse: widget.onCollapse,
         onRemove: widget.onRemove,
         onAppend: widget.onAppend,
+        treeController: widget.treeController,
       );
     });
   }
@@ -90,7 +95,7 @@ class _TreeNodeState extends State<TreeNode> with SingleTickerProviderStateMixin
   initState() {
     super.initState();
     _isExpanded = widget.data.expanded;
-    _isChecked = widget.data.checked;
+    widget.treeController.setChecked(widget.data.extra, widget.data.checked);
     _rotationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -104,6 +109,12 @@ class _TreeNodeState extends State<TreeNode> with SingleTickerProviderStateMixin
     if (_isExpanded) {
       _rotationController.forward();
     }
+  }
+
+  @override
+  void dispose() {
+    _rotationController.dispose();
+    super.dispose();
   }
 
   @override
@@ -122,9 +133,7 @@ class _TreeNodeState extends State<TreeNode> with SingleTickerProviderStateMixin
               widget.onTap(widget.data);
               toggleExpansion();
             } else {
-              _isChecked = !_isChecked;
-              widget.onCheck(_isChecked, widget.data);
-              setState(() {});
+              setChecked(!_nodeChecked);
             }
           } : (){},
           child: Container(
@@ -146,11 +155,9 @@ class _TreeNodeState extends State<TreeNode> with SingleTickerProviderStateMixin
                 ),
                 if (widget.showCheckBox)
                   Checkbox(
-                    value: _isChecked,
+                    value: _nodeChecked,
                     onChanged: (bool? value) {
-                      _isChecked = value!;
-                      widget.onCheck(_isChecked, widget.data);
-                      setState(() {});
+                      setChecked(value!);
                     },
                   ),
                 if (widget.lazy && _showLoading)
@@ -198,6 +205,15 @@ class _TreeNodeState extends State<TreeNode> with SingleTickerProviderStateMixin
         )
       ],
     );
+  }
+
+  bool get _nodeChecked => widget.treeController.getChecked(widget.data.extra);
+
+  void setChecked(bool value) {
+    // _isChecked = value;
+    widget.treeController.setChecked(widget.data.extra, value);
+    widget.onCheck(_nodeChecked, widget.data);
+    setState(() {});
   }
 
   void toggleExpansion() {
